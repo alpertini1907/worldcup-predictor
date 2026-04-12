@@ -11,27 +11,43 @@ async function api(path, options = {}) {
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${API}${path}`, { ...options, headers });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Bir hata oluştu');
+  if (!res.ok) throw new Error(data.error || 'Bir hata olustu');
   return data;
 }
 
-// ==================== AUTH ====================
-function showLogin() {
-  document.getElementById('loginPage').classList.remove('hidden');
-  document.getElementById('registerPage').classList.add('hidden');
+// ==================== AUTH PAGES ====================
+function hideAllAuthPages() {
+  ['loginPage', 'registerPage', 'forgotPage', 'resetPage'].forEach(id => {
+    document.getElementById(id).classList.add('hidden');
+  });
   clearAlerts();
 }
 
+function showLogin() {
+  hideAllAuthPages();
+  document.getElementById('loginPage').classList.remove('hidden');
+}
+
 function showRegister() {
-  document.getElementById('loginPage').classList.add('hidden');
+  hideAllAuthPages();
   document.getElementById('registerPage').classList.remove('hidden');
-  clearAlerts();
+}
+
+function showForgotPassword() {
+  hideAllAuthPages();
+  document.getElementById('forgotPage').classList.remove('hidden');
+}
+
+function showResetPassword() {
+  hideAllAuthPages();
+  document.getElementById('resetPage').classList.remove('hidden');
 }
 
 function clearAlerts() {
   document.querySelectorAll('.alert').forEach(el => el.classList.add('hidden'));
 }
 
+// ==================== LOGIN ====================
 async function handleLogin(e) {
   e.preventDefault();
   clearAlerts();
@@ -55,6 +71,7 @@ async function handleLogin(e) {
   }
 }
 
+// ==================== REGISTER ====================
 async function handleRegister(e) {
   e.preventDefault();
   clearAlerts();
@@ -79,6 +96,63 @@ async function handleRegister(e) {
   }
 }
 
+// ==================== FORGOT PASSWORD ====================
+async function handleForgotPassword(e) {
+  e.preventDefault();
+  clearAlerts();
+  try {
+    const data = await api('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email: document.getElementById('forgotEmail').value }),
+    });
+    const el = document.getElementById('forgotSuccess');
+    el.textContent = data.message;
+    el.classList.remove('hidden');
+    document.getElementById('forgotForm').reset();
+  } catch (err) {
+    const el = document.getElementById('forgotError');
+    el.textContent = err.message;
+    el.classList.remove('hidden');
+  }
+}
+
+// ==================== RESET PASSWORD ====================
+async function handleResetPassword(e) {
+  e.preventDefault();
+  clearAlerts();
+  const password = document.getElementById('resetPassword').value;
+  const confirm = document.getElementById('resetPasswordConfirm').value;
+  if (password !== confirm) {
+    const el = document.getElementById('resetError');
+    el.textContent = 'Sifreler eslesmiyor';
+    el.classList.remove('hidden');
+    return;
+  }
+  const params = new URLSearchParams(window.location.search);
+  const resetToken = params.get('token');
+  if (!resetToken) {
+    const el = document.getElementById('resetError');
+    el.textContent = 'Gecersiz sifirlama linki';
+    el.classList.remove('hidden');
+    return;
+  }
+  try {
+    const data = await api('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token: resetToken, password }),
+    });
+    const el = document.getElementById('resetSuccess');
+    el.textContent = data.message;
+    el.classList.remove('hidden');
+    document.getElementById('resetForm').reset();
+  } catch (err) {
+    const el = document.getElementById('resetError');
+    el.textContent = err.message;
+    el.classList.remove('hidden');
+  }
+}
+
+// ==================== LOGOUT ====================
 function logout() {
   token = null;
   currentUser = null;
@@ -87,6 +161,7 @@ function logout() {
   document.getElementById('authPage').classList.remove('hidden');
   document.getElementById('appPage').classList.add('hidden');
   document.getElementById('navbar').classList.add('hidden');
+  window.history.replaceState({}, '', '/');
   showLogin();
 }
 
@@ -141,7 +216,7 @@ function initApp() {
 
 // ==================== MATCHES ====================
 const stageNames = {
-  group: 'Grup', r16: 'Son 16', qf: 'Çeyrek Final', sf: 'Yarı Final', final: 'Final'
+  group: 'Grup', r16: 'Son 16', qf: 'Ceyrek Final', sf: 'Yari Final', final: 'Final'
 };
 
 const stageOrder = ['group', 'r16', 'qf', 'sf', 'final'];
@@ -165,11 +240,10 @@ async function loadMatches() {
       return;
     }
 
-    // Build stage tabs
     const stages = [...new Set(matches.map(m => m.stage))];
     stages.sort((a, b) => stageOrder.indexOf(a) - stageOrder.indexOf(b));
     const tabsEl = document.getElementById('matchTabs');
-    tabsEl.innerHTML = `<button class="tab active" onclick="filterMatches('all')">Tümü</button>` +
+    tabsEl.innerHTML = `<button class="tab active" onclick="filterMatches('all')">Tumu</button>` +
       stages.map(s => `<button class="tab" onclick="filterMatches('${s}')">${stageNames[s]}</button>`).join('');
 
     window._allMatches = matches;
@@ -192,7 +266,7 @@ function filterMatches(stage) {
 function renderMatches(matches) {
   const list = document.getElementById('matchList');
   list.innerHTML = matches.map(m => {
-    const statusBadge = `<span class="badge badge-${m.status}">${m.status === 'open' ? 'Açık' : m.status === 'locked' ? 'Kilitli' : 'Tamamlandı'}</span>`;
+    const statusBadge = `<span class="badge badge-${m.status}">${m.status === 'open' ? 'Acik' : m.status === 'locked' ? 'Kilitli' : 'Tamamlandi'}</span>`;
     const stageBadge = `<span class="match-stage">${stageNames[m.stage]}${m.group_name ? ' ' + m.group_name : ''}</span>`;
 
     let scoreCol = '';
@@ -216,7 +290,7 @@ function renderMatches(matches) {
           <span class="row-sep">-</span>
           <input type="number" class="row-score-input" id="away_${m.id}" min="0" max="20" value="${m.pred_away}">
         </div>`;
-      actionCol = `<button class="btn btn-primary btn-sm" onclick="submitPrediction('${m.id}')">Güncelle</button>`;
+      actionCol = `<button class="btn btn-primary btn-sm" onclick="submitPrediction('${m.id}')">Guncelle</button>`;
     } else if (m.pred_home !== null) {
       scoreCol = `<span class="row-pred-locked">${m.pred_home} - ${m.pred_away}</span>`;
       actionCol = `<button class="btn btn-accent btn-sm" onclick="showMatchPredictions('${m.id}', '${m.home_team}', '${m.away_team}')">Tahminler</button>`;
@@ -233,7 +307,6 @@ function renderMatches(matches) {
       actionCol = `<button class="btn btn-accent btn-sm" onclick="showMatchPredictions('${m.id}', '${m.home_team}', '${m.away_team}')">Tahminler</button>`;
     }
 
-    // For locked/done, add predictions button in action col if not already there
     const predsBtn = (m.status !== 'open' && m.status === 'done')
       ? `<button class="btn btn-accent btn-sm" onclick="showMatchPredictions('${m.id}', '${m.home_team}', '${m.away_team}')" style="margin-left:4px">Tahminler</button>`
       : '';
@@ -255,8 +328,7 @@ function renderMatches(matches) {
     `;
   }).join('');
 
-  // Add save-all buttons top and bottom
-  const saveAllBtn = `<div class="save-all-bar"><button class="btn btn-primary" onclick="saveAllPredictions()">Tüm Tahminleri Kaydet</button></div>`;
+  const saveAllBtn = `<div class="save-all-bar"><button class="btn btn-primary" onclick="saveAllPredictions()">Tum Tahminleri Kaydet</button></div>`;
   const hasOpenInputs = matches.some(m => m.status === 'open');
   if (hasOpenInputs) {
     list.innerHTML = saveAllBtn + list.innerHTML + saveAllBtn;
@@ -283,12 +355,11 @@ async function saveAllPredictions() {
       });
       saved++;
     } catch (err) {
-      // Skip matches that are locked or already failed
       errors++;
     }
   }
 
-  alert(`${saved} tahmin kaydedildi` + (errors > 0 ? `, ${errors} atlandı (kilitli/hatalı)` : ''));
+  alert(`${saved} tahmin kaydedildi` + (errors > 0 ? `, ${errors} atlandi (kilitli/hatali)` : ''));
   loadMatches();
 }
 
@@ -299,7 +370,7 @@ async function submitPrediction(matchId) {
   const predAway = parseInt(awayEl.value);
 
   if (isNaN(predHome) || isNaN(predAway) || predHome < 0 || predAway < 0) {
-    alert('Lütfen geçerli bir skor giriniz');
+    alert('Lutfen gecerli bir skor giriniz');
     return;
   }
 
@@ -338,7 +409,7 @@ async function loadPredictions() {
     stats.innerHTML = `
       <div class="stat-card"><div class="stat-value">${preds.length}</div><div class="stat-label">Toplam Tahmin</div></div>
       <div class="stat-card"><div class="stat-value">${totalPts}</div><div class="stat-label">Toplam Puan</div></div>
-      <div class="stat-card"><div class="stat-value">${completed.length > 0 ? Math.round(correct.length / completed.length * 100) : 0}%</div><div class="stat-label">Başarı Oranı</div></div>
+      <div class="stat-card"><div class="stat-value">${completed.length > 0 ? Math.round(correct.length / completed.length * 100) : 0}%</div><div class="stat-label">Basari Orani</div></div>
     `;
 
     list.innerHTML = preds.map(p => `
@@ -355,11 +426,11 @@ async function loadPredictions() {
         <div style="text-align:center">
           <div style="font-size:14px;color:var(--text-light)">Tahmininiz: <strong>${p.pred_home} - ${p.pred_away}</strong></div>
           ${p.match_status === 'done' ? `
-            <div style="font-size:14px;margin-top:4px">Gerçek Skor: <strong>${p.real_home_score} - ${p.real_away_score}</strong></div>
+            <div style="font-size:14px;margin-top:4px">Gercek Skor: <strong>${p.real_home_score} - ${p.real_away_score}</strong></div>
             <div class="prediction-result ${p.points_earned > 0 ? 'earned' : 'zero'}">
               ${p.points_earned > 0 ? `+${p.points_earned} puan` : '0 puan'}
             </div>
-          ` : `<div class="badge badge-${p.match_status}" style="margin-top:8px">${p.match_status === 'open' ? 'Maç bekleniyor' : 'Kilitli'}</div>`}
+          ` : `<div class="badge badge-${p.match_status}" style="margin-top:8px">${p.match_status === 'open' ? 'Mac bekleniyor' : 'Kilitli'}</div>`}
         </div>
       </div>
     `).join('');
@@ -459,11 +530,11 @@ async function loadAdminMatches() {
         <td><strong>${m.home_team}</strong> vs <strong>${m.away_team}</strong></td>
         <td>${formatDate(m.kickoff_at)}</td>
         <td><span class="match-stage">${stageNames[m.stage]}</span></td>
-        <td><span class="badge badge-${m.status}">${m.status === 'open' ? 'Açık' : m.status === 'locked' ? 'Kilitli' : 'Tamamlandı'}</span></td>
+        <td><span class="badge badge-${m.status}">${m.status === 'open' ? 'Acik' : m.status === 'locked' ? 'Kilitli' : 'Tamamlandi'}</span></td>
         <td>${m.status === 'done' ? `<strong>${m.real_home_score} - ${m.real_away_score}</strong>` : '-'}</td>
         <td>${m.prediction_count}</td>
         <td>
-          ${m.status !== 'done' ? `<button class="btn btn-success btn-sm" onclick="showResultModal('${m.id}', '${m.home_team}', '${m.away_team}')">Sonuç Gir</button>` : ''}
+          ${m.status !== 'done' ? `<button class="btn btn-success btn-sm" onclick="showResultModal('${m.id}', '${m.home_team}', '${m.away_team}')">Sonuc Gir</button>` : ''}
           ${m.status !== 'done' ? `<button class="btn btn-danger btn-sm" onclick="deleteMatch('${m.id}')" style="margin-left:4px">Sil</button>` : ''}
         </td>
       </tr>
@@ -476,35 +547,35 @@ async function loadAdminMatches() {
 function showAddMatchModal() {
   const modal = document.getElementById('modalContent');
   modal.innerHTML = `
-    <h3 class="modal-title">Yeni Maç Ekle</h3>
+    <h3 class="modal-title">Yeni Mac Ekle</h3>
     <div class="form-group">
-      <label>Ev Sahibi Takım</label>
-      <input type="text" class="form-control" id="mHome" placeholder="Örn: Türkiye">
+      <label>Ev Sahibi Takim</label>
+      <input type="text" class="form-control" id="mHome" placeholder="Orn: Turkiye">
     </div>
     <div class="form-group">
-      <label>Deplasman Takımı</label>
-      <input type="text" class="form-control" id="mAway" placeholder="Örn: Brezilya">
+      <label>Deplasman Takimi</label>
+      <input type="text" class="form-control" id="mAway" placeholder="Orn: Brezilya">
     </div>
     <div class="form-group">
-      <label>Başlama Tarihi/Saati (UTC)</label>
+      <label>Baslama Tarihi/Saati (UTC)</label>
       <input type="datetime-local" class="form-control" id="mKickoff">
     </div>
     <div class="form-group">
-      <label>Aşama</label>
+      <label>Asama</label>
       <select class="form-control" id="mStage">
         <option value="group">Grup</option>
         <option value="r16">Son 16</option>
-        <option value="qf">Çeyrek Final</option>
-        <option value="sf">Yarı Final</option>
+        <option value="qf">Ceyrek Final</option>
+        <option value="sf">Yari Final</option>
         <option value="final">Final</option>
       </select>
     </div>
     <div class="form-group">
-      <label>Grup Adı (opsiyonel)</label>
-      <input type="text" class="form-control" id="mGroup" placeholder="Örn: A">
+      <label>Grup Adi (opsiyonel)</label>
+      <input type="text" class="form-control" id="mGroup" placeholder="Orn: A">
     </div>
     <div class="modal-actions">
-      <button class="btn" onclick="closeModal()">İptal</button>
+      <button class="btn" onclick="closeModal()">Iptal</button>
       <button class="btn btn-primary" onclick="addMatch()">Ekle</button>
     </div>
   `;
@@ -518,7 +589,7 @@ async function addMatch() {
   const stage = document.getElementById('mStage').value;
   const group = document.getElementById('mGroup').value;
 
-  if (!home || !away || !kickoff) { alert('Zorunlu alanları doldurun'); return; }
+  if (!home || !away || !kickoff) { alert('Zorunlu alanlari doldurun'); return; }
 
   try {
     await api('/api/admin/matches', {
@@ -541,7 +612,7 @@ async function addMatch() {
 function showResultModal(matchId, home, away) {
   const modal = document.getElementById('modalContent');
   modal.innerHTML = `
-    <h3 class="modal-title">Sonuç Gir</h3>
+    <h3 class="modal-title">Sonuc Gir</h3>
     <p style="margin-bottom:16px"><strong>${home}</strong> vs <strong>${away}</strong></p>
     <div class="score-input-group">
       <div>
@@ -555,7 +626,7 @@ function showResultModal(matchId, home, away) {
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn" onclick="closeModal()">İptal</button>
+      <button class="btn" onclick="closeModal()">Iptal</button>
       <button class="btn btn-success" onclick="submitResult('${matchId}')">Kaydet & Puanla</button>
     </div>
   `;
@@ -565,7 +636,7 @@ function showResultModal(matchId, home, away) {
 async function submitResult(matchId) {
   const home = parseInt(document.getElementById('rHome').value);
   const away = parseInt(document.getElementById('rAway').value);
-  if (isNaN(home) || isNaN(away) || home < 0 || away < 0) { alert('Geçerli skor girin'); return; }
+  if (isNaN(home) || isNaN(away) || home < 0 || away < 0) { alert('Gecerli skor girin'); return; }
 
   try {
     await api(`/api/admin/matches/${matchId}/result`, {
@@ -580,7 +651,7 @@ async function submitResult(matchId) {
 }
 
 async function deleteMatch(matchId) {
-  if (!confirm('Bu maçı silmek istediğinize emin misiniz?')) return;
+  if (!confirm('Bu maci silmek istediginize emin misiniz?')) return;
   try {
     await api(`/api/admin/matches/${matchId}`, { method: 'DELETE' });
     loadAdminMatches();
@@ -598,12 +669,12 @@ async function loadScoringParams() {
         <table>
           <thead>
             <tr>
-              <th>Aşama</th>
-              <th>Doğru Sonuç (1/X/2)</th>
-              <th>Doğru Tam Skor</th>
-              <th>Doğru Alt/Üst</th>
-              <th>Alt/Üst Eşiği</th>
-              <th>İşlem</th>
+              <th>Asama</th>
+              <th>Dogru Sonuc (1/X/2)</th>
+              <th>Dogru Tam Skor</th>
+              <th>Dogru Alt/Ust</th>
+              <th>Alt/Ust Esigi</th>
+              <th>Islem</th>
             </tr>
           </thead>
           <tbody>
@@ -642,7 +713,7 @@ async function saveScoringParam(stage) {
         ou_threshold: threshold,
       }),
     });
-    alert('Parametreler güncellendi');
+    alert('Parametreler guncellendi');
   } catch (err) {
     alert(err.message);
   }
@@ -659,7 +730,7 @@ async function showMatchPredictions(matchId, home, away) {
     if (preds.length === 0) {
       modal.innerHTML = `
         <h3 class="modal-title">${home} vs ${away}</h3>
-        <div class="empty-state">Henüz kimse tahmin yapmamış.</div>
+        <div class="empty-state">Henuz kimse tahmin yapmamis.</div>
         <div class="modal-actions"><button class="btn" onclick="closeModal()">Kapat</button></div>
       `;
       return;
@@ -671,7 +742,7 @@ async function showMatchPredictions(matchId, home, away) {
         <table>
           <thead>
             <tr>
-              <th>Kullanıcı</th>
+              <th>Kullanici</th>
               <th style="text-align:center">Tahmin</th>
               <th style="text-align:center">Puan</th>
             </tr>
@@ -700,15 +771,11 @@ async function showMatchPredictions(matchId, home, away) {
 
 // ==================== EXPORT ====================
 function exportCSV(type) {
-  const a = document.createElement('a');
-  a.href = `/api/admin/export/${type}`;
-  a.setAttribute('download', '');
-  // Add auth header via fetch and blob
   fetch(`/api/admin/export/${type}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   })
   .then(res => {
-    if (!res.ok) throw new Error('Export başarısız');
+    if (!res.ok) throw new Error('Export basarisiz');
     return res.blob();
   })
   .then(blob => {
@@ -735,7 +802,7 @@ async function loadAdmins() {
         <td>${formatDate(a.created_at)}</td>
         <td>
           ${a.id !== currentUser.id
-            ? `<button class="btn btn-danger btn-sm" onclick="removeAdmin('${a.id}')">Yetkiyi Kaldır</button>`
+            ? `<button class="btn btn-danger btn-sm" onclick="removeAdmin('${a.id}')">Yetkiyi Kaldir</button>`
             : '<span class="badge badge-active">Sen</span>'}
         </td>
       </tr>
@@ -763,7 +830,7 @@ async function addAdmin() {
 }
 
 async function removeAdmin(adminId) {
-  if (!confirm('Bu kullanıcının admin yetkisini kaldırmak istediğinize emin misiniz?')) return;
+  if (!confirm('Bu kullanicinin admin yetkisini kaldirmak istediginize emin misiniz?')) return;
   try {
     await api(`/api/admin/admins/${adminId}`, { method: 'DELETE' });
     loadAdmins();
@@ -778,8 +845,22 @@ function closeModal(e) {
   document.getElementById('modalOverlay').classList.add('hidden');
 }
 
+// ==================== ROUTER (URL-based) ====================
+function handleRoute() {
+  const path = window.location.pathname;
+  const params = new URLSearchParams(window.location.search);
+
+  if (path === '/reset-password' && params.get('token')) {
+    showResetPassword();
+    return true;
+  }
+  return false;
+}
+
 // ==================== INIT ====================
 document.addEventListener('DOMContentLoaded', () => {
+  if (handleRoute()) return;
+
   if (token && currentUser) {
     initApp();
   } else {

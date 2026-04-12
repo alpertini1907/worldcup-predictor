@@ -38,7 +38,9 @@
       "WebFetch(domain:www.espn.com)",
       "Bash(gh auth:*)",
       "Bash(where gh:*)",
-      "Bash(git --version)"
+      "Bash(git --version)",
+      "WebFetch(domain:www.tff.org)",
+      "WebFetch(domain:www.mackolik.com)"
     ]
   }
 }

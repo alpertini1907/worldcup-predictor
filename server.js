@@ -37,7 +37,7 @@ cron.schedule('* * * * *', async () => {
   try {
     const db = await getDb();
     const result = db.prepare(
-      "UPDATE matches SET status = 'locked' WHERE status = 'open' AND kickoff_at <= datetime('now')"
+      "UPDATE matches SET status = 'locked' WHERE status = 'open' AND kickoff_at <= datetime('now', '+5 minutes')"
     ).run();
     if (result.changes > 0) {
       console.log(`[CRON] ${result.changes} maç kilitlendi`);
