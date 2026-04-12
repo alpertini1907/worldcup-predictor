@@ -9,7 +9,7 @@ async function seed() {
   const adminPassword = bcrypt.hashSync('admin123', 10);
   try {
     db.prepare(
-      "INSERT INTO users (id, full_name, email, phone, password, role, status, ) VALUES (?, ?, ?, ?, ?, 'admin', 'active')"
+      "INSERT INTO users (id, full_name, email, phone, password, role, status) VALUES (?, ?, ?, ?, ?, 'admin', 'active')"
     ).run(uuid(), 'Admin', 'admin@worldcup.com', '05001234567', adminPassword);
     console.log('Admin oluşturuldu: admin@worldcup.com / admin123');
   } catch (e) {
@@ -19,7 +19,7 @@ async function seed() {
   // alpertini admin
   try {
     db.prepare(
-      "INSERT INTO users (id, full_name, email, phone, password, role, status, ) VALUES (?, ?, ?, ?, ?, 'admin', 'active')"
+      "INSERT INTO users (id, full_name, email, phone, password, role, status) VALUES (?, ?, ?, ?, ?, 'admin', 'active')"
     ).run(uuid(), 'Alper Tini', 'alpertini@gmail.com', '00000000000', bcrypt.hashSync('admin123', 10));
     console.log('Alper admin oluşturuldu: alpertini@gmail.com / admin123');
   } catch (e) {
