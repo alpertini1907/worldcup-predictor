@@ -49,14 +49,10 @@ cron.schedule('* * * * *', async () => {
 
 async function autoSeed() {
   try {
-    const db = await getDb();
-    const count = db.prepare('SELECT COUNT(*) as c FROM matches').get();
-    if (count.c === 0) {
-      console.log('[AUTO-SEED] Maç bulunamadı, seed çalıştırılıyor...');
-      const { seed } = require('./seed');
-      await seed();
-      console.log('[AUTO-SEED] Tamamlandı.');
-    }
+    console.log('[AUTO-SEED] Seed çalıştırılıyor...');
+    const { seed } = require('./seed');
+    await seed();
+    console.log('[AUTO-SEED] Tamamlandı.');
   } catch (e) {
     console.error('[AUTO-SEED] Hata:', e.message);
   }
