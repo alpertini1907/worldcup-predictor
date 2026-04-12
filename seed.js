@@ -157,4 +157,9 @@ async function seed() {
   console.log('\nSunucuyu başlatmak için: node server.js');
 }
 
-seed().catch(console.error);
+// Doğrudan çalıştırılırsa seed'i başlat
+if (require.main === module) {
+  seed().catch(console.error);
+}
+
+module.exports = { seed };

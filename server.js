@@ -47,8 +47,24 @@ cron.schedule('* * * * *', async () => {
   }
 });
 
+async function autoSeed() {
+  try {
+    const db = await getDb();
+    const count = db.prepare('SELECT COUNT(*) as c FROM matches').get();
+    if (count.c === 0) {
+      console.log('[AUTO-SEED] Maç bulunamadı, seed çalıştırılıyor...');
+      const { seed } = require('./seed');
+      await seed();
+      console.log('[AUTO-SEED] Tamamlandı.');
+    }
+  } catch (e) {
+    console.error('[AUTO-SEED] Hata:', e.message);
+  }
+}
+
 async function start() {
   await getDb(); // ensure DB is ready
+  await autoSeed();
   app.listen(PORT, () => {
     console.log(`Server çalışıyor: http://localhost:${PORT}`);
   });
