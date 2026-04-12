@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "install",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["install"],
+      "port": 3001
+    },
+    {
+      "name": "reset-db",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["reset-db.js"],
+      "port": 3003
+    },
+    {
+      "name": "seed",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["seed.js"],
+      "port": 3002
+    },
+    {
+      "name": "worldcup",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "port": 3000
+    }
+  ]
+}

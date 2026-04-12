@@ -1,0 +1,24 @@
+{
+  "name": "worldcup-predictor",
+  "version": "1.0.0",
+  "description": "Dünya Kupası Tahmin Uygulaması",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "seed": "node seed.js",
+    "setup": "node seed.js && node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "sql.js": "^1.11.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "cors": "^2.8.5",
+    "node-cron": "^3.0.3",
+    "uuid": "^9.0.0"
+  }
+}

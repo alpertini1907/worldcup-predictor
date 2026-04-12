@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dünya Kupası Tahmin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- NAVBAR (hidden until login) -->
+  <nav class="navbar hidden" id="navbar">
+    <div class="navbar-brand">
+      <span>⚽</span> Dünya Kupası 2026
+    </div>
+    <ul class="navbar-nav" id="navLinks">
+      <li><a href="#" data-page="matches" class="active">Maçlar</a></li>
+      <li><a href="#" data-page="predictions">Tahminlerim</a></li>
+      <li><a href="#" data-page="leaderboard">Sıralama</a></li>
+      <li id="adminNavItem" class="hidden"><a href="#" data-page="admin">Admin</a></li>
+    </ul>
+    <div class="navbar-right">
+      <span class="user-info" id="userInfo"></span>
+      <button class="btn-logout" onclick="logout()">Çıkış</button>
+    </div>
+  </nav>
+
+  <!-- AUTH PAGES -->
+  <div id="authPage">
+    <!-- LOGIN -->
+    <div id="loginPage" class="auth-container">
+      <div class="auth-card">
+        <h1 class="auth-title">⚽ Dünya Kupası 2026</h1>
+        <p class="auth-subtitle">Tahmin oyununa giriş yap</p>
+        <div id="loginError" class="alert alert-error hidden"></div>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label>E-posta</label>
+            <input type="email" class="form-control" id="loginEmail" required placeholder="ornek@mail.com">
+          </div>
+          <div class="form-group">
+            <label>Şifre</label>
+            <input type="password" class="form-control" id="loginPassword" required placeholder="••••••">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%">Giriş Yap</button>
+        </form>
+        <p class="auth-footer">Hesabın yok mu? <a href="#" onclick="showRegister()">Kayıt Ol</a></p>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerPage" class="auth-container hidden">
+      <div class="auth-card">
+        <h1 class="auth-title">Kayıt Ol</h1>
+        <p class="auth-subtitle">Tahmin oyununa katıl</p>
+        <div id="registerError" class="alert alert-error hidden"></div>
+        <div id="registerSuccess" class="alert alert-success hidden"></div>
+        <form id="registerForm" onsubmit="handleRegister(event)">
+          <div class="form-group">
+            <label>Ad Soyad</label>
+            <input type="text" class="form-control" id="regName" required placeholder="Adınız Soyadınız">
+          </div>
+          <div class="form-group">
+            <label>E-posta</label>
+            <input type="email" class="form-control" id="regEmail" required placeholder="ornek@mail.com">
+          </div>
+          <div class="form-group">
+            <label>Telefon</label>
+            <input type="tel" class="form-control" id="regPhone" required placeholder="05xx xxx xx xx">
+          </div>
+          <div class="form-group">
+            <label>Şifre (en az 6 karakter)</label>
+            <input type="password" class="form-control" id="regPassword" required minlength="6" placeholder="••••••">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%">Kayıt Ol</button>
+        </form>
+        <p class="auth-footer">Zaten hesabın var mı? <a href="#" onclick="showLogin()">Giriş Yap</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="appPage" class="hidden">
+    <!-- Waiting status -->
+    <div id="waitingPage" class="hidden">
+      <div class="container">
+        <div class="status-waiting">
+          <h2>Ödeme Bekleniyor</h2>
+          <p>Kaydınız alınmıştır. Ödeme onaylandıktan sonra tahmin yapabileceksiniz.</p>
+          <p style="margin-top: 12px; font-size: 13px;">Ödeme yaptıysanız lütfen admin ile iletişime geçin.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Matches Page -->
+    <div id="matchesPage" class="hidden">
+      <div class="container">
+        <h1 class="page-title">Maçlar ve Tahminler</h1>
+        <div class="tabs" id="matchTabs"></div>
+        <div id="matchList" class="match-grid"></div>
+        <div id="matchEmpty" class="empty-state hidden">Henüz maç bulunmuyor.</div>
+      </div>
+    </div>
+
+    <!-- Predictions Page -->
+    <div id="predictionsPage" class="hidden">
+      <div class="container">
+        <h1 class="page-title">Tahminlerim</h1>
+        <div class="stats-grid" id="myStats"></div>
+        <div id="predictionList"></div>
+        <div id="predEmpty" class="empty-state hidden">Henüz tahmin yapmadınız.</div>
+      </div>
+    </div>
+
+    <!-- Leaderboard Page -->
+    <div id="leaderboardPage" class="hidden">
+      <div class="container">
+        <h1 class="page-title">Puan Sıralaması</h1>
+        <div class="card">
+          <div id="leaderboardList"></div>
+          <div id="lbEmpty" class="empty-state hidden">Henüz sıralama oluşmadı.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Page -->
+    <div id="adminPage" class="hidden">
+      <div class="container">
+        <h1 class="page-title">Admin Paneli</h1>
+        <div class="tabs">
+          <button class="tab active" onclick="showAdminTab('users')">Kullanıcılar</button>
+          <button class="tab" onclick="showAdminTab('matches')">Maçlar</button>
+          <button class="tab" onclick="showAdminTab('scoring')">Puanlama</button>
+          <button class="tab" onclick="showAdminTab('admins')">Adminler</button>
+        </div>
+
+        <!-- Export buttons -->
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="btn btn-accent btn-sm" onclick="exportCSV('predictions')">Tahminleri Dışa Aktar (CSV)</button>
+          <button class="btn btn-accent btn-sm" onclick="exportCSV('leaderboard')">Sıralamayı Dışa Aktar (CSV)</button>
+        </div>
+
+        <!-- Admin: Users -->
+        <div id="adminUsers" class="card">
+          <div class="card-header">
+            <h3>Kullanıcı Listesi</h3>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ad Soyad</th>
+                  <th>E-posta</th>
+                  <th>Telefon</th>
+                  <th>Durum</th>
+                  <th>Tahmin</th>
+                  <th>Puan</th>
+                  <th>İşlem</th>
+                </tr>
+              </thead>
+              <tbody id="adminUserList"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Admin: Matches -->
+        <div id="adminMatches" class="card hidden">
+          <div class="card-header">
+            <h3>Maç Yönetimi</h3>
+            <button class="btn btn-primary btn-sm" onclick="showAddMatchModal()">+ Maç Ekle</button>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Maç</th>
+                  <th>Tarih</th>
+                  <th>Aşama</th>
+                  <th>Durum</th>
+                  <th>Skor</th>
+                  <th>Tahmin</th>
+                  <th>İşlem</th>
+                </tr>
+              </thead>
+              <tbody id="adminMatchList"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Admin: Admins -->
+        <div id="adminAdmins" class="card hidden">
+          <div class="card-header">
+            <h3>Admin Yönetimi</h3>
+          </div>
+          <div style="margin-bottom:16px;display:flex;gap:8px;align-items:flex-end">
+            <div class="form-group" style="flex:1;margin-bottom:0">
+              <label>E-posta ile admin ekle</label>
+              <input type="email" class="form-control" id="newAdminEmail" placeholder="ornek@mail.com">
+            </div>
+            <button class="btn btn-primary" onclick="addAdmin()">Admin Yap</button>
+          </div>
+          <div id="adminAddResult"></div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Ad Soyad</th>
+                  <th>E-posta</th>
+                  <th>Telefon</th>
+                  <th>Kayıt Tarihi</th>
+                  <th>İşlem</th>
+                </tr>
+              </thead>
+              <tbody id="adminAdminList"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Admin: Scoring -->
+        <div id="adminScoring" class="card hidden">
+          <div class="card-header">
+            <h3>Puanlama Parametreleri</h3>
+          </div>
+          <div id="scoringParams"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modalOverlay" class="modal-overlay hidden" onclick="closeModal(event)">
+    <div class="modal" id="modalContent" onclick="event.stopPropagation()"></div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

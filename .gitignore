@@ -1,0 +1,7 @@
+node_modules/
+worldcup.db
+*.zip
+docx_extracted/
+extracted_text.txt
+temp.*
+.env
