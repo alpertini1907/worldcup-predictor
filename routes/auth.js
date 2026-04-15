@@ -53,8 +53,31 @@ router.post('/login', (req, res) => {
       role: user.role,
       status: user.status,
       total_points: user.total_points,
+      must_change_password: user.must_change_password === 1,
     },
   });
+});
+
+// ==================== ZORUNLU SIFRE BELIRLEME (admin sifirlama sonrasi) ====================
+router.post('/set-new-password', authenticate, (req, res) => {
+  const db = req.db;
+  const { new_password, new_password_confirm } = req.body;
+  if (!new_password || !new_password_confirm) {
+    return res.status(400).json({ error: 'Tum alanlar zorunludur' });
+  }
+  if (new_password.length < 6) {
+    return res.status(400).json({ error: 'Yeni sifre en az 6 karakter olmali' });
+  }
+  if (new_password !== new_password_confirm) {
+    return res.status(400).json({ error: 'Sifreler eslesmiyor' });
+  }
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  if (!user) {
+    return res.status(404).json({ error: 'Kullanici bulunamadi' });
+  }
+  const hashedPassword = bcrypt.hashSync(new_password, 10);
+  db.prepare('UPDATE users SET password = ?, must_change_password = 0 WHERE id = ?').run(hashedPassword, req.user.id);
+  res.json({ message: 'Sifreniz basariyla belirlendi' });
 });
 
 // ==================== SIFRE DEGISTIR (giris yapmis kullanici) ====================
@@ -75,7 +98,7 @@ router.post('/change-password', authenticate, (req, res) => {
     return res.status(401).json({ error: 'Mevcut sifre hatali' });
   }
   const hashedPassword = bcrypt.hashSync(new_password, 10);
-  db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashedPassword, req.user.id);
+  db.prepare('UPDATE users SET password = ?, must_change_password = 0 WHERE id = ?').run(hashedPassword, req.user.id);
   res.json({ message: 'Sifreniz basariyla degistirildi' });
 });
 

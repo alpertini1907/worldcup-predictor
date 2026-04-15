@@ -85,6 +85,28 @@
 
   <!-- MAIN APP -->
   <div id="appPage" class="hidden">
+    <!-- Must Change Password -->
+    <div id="mustChangePage" class="hidden">
+      <div class="container">
+        <div class="auth-container">
+          <div class="auth-card">
+            <h1 class="auth-title">Sifrenizi Degistirin</h1>
+            <p class="auth-subtitle">Devam etmek icin yeni bir sifre belirlemelisiniz.</p>
+            <div id="mustChangeResult"></div>
+            <div class="form-group">
+              <label>Yeni Sifre (en az 6 karakter)</label>
+              <input type="password" class="form-control" id="mcNewPassword" minlength="6" placeholder="••••••">
+            </div>
+            <div class="form-group">
+              <label>Yeni Sifre Tekrar</label>
+              <input type="password" class="form-control" id="mcNewPasswordConfirm" minlength="6" placeholder="••••••">
+            </div>
+            <button class="btn btn-primary" style="width:100%" onclick="handleMustChangePassword()">Sifremi Belirle</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Waiting status -->
     <div id="waitingPage" class="hidden">
       <div class="container">

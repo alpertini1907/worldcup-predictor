@@ -144,7 +144,7 @@ router.post('/users/:id/reset-password', (req, res) => {
   }
 
   const hashedPassword = bcrypt.hashSync(newPassword, 10);
-  db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashedPassword, req.params.id);
+  db.prepare('UPDATE users SET password = ?, must_change_password = 1 WHERE id = ?').run(hashedPassword, req.params.id);
   res.json({ message: `${user.full_name} icin yeni sifre: ${newPassword}`, newPassword });
 });
 

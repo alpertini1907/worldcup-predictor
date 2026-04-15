@@ -98,6 +98,40 @@ async function handleRegister(e) {
   }
 }
 
+// ==================== ZORUNLU SIFRE DEGISTIR ====================
+async function handleMustChangePassword() {
+  const newPw = document.getElementById('mcNewPassword').value;
+  const newPwConfirm = document.getElementById('mcNewPasswordConfirm').value;
+  const resultDiv = document.getElementById('mustChangeResult');
+
+  if (!newPw || !newPwConfirm) {
+    resultDiv.innerHTML = '<div class="alert alert-error">Tum alanlari doldurun</div>';
+    return;
+  }
+  if (newPw.length < 6) {
+    resultDiv.innerHTML = '<div class="alert alert-error">Sifre en az 6 karakter olmali</div>';
+    return;
+  }
+  if (newPw !== newPwConfirm) {
+    resultDiv.innerHTML = '<div class="alert alert-error">Sifreler eslesmiyor</div>';
+    return;
+  }
+  try {
+    // Sifre degistirmek icin mevcut (gecici) sifreyi bilmiyoruz
+    // Ozel endpoint kullanalim
+    await api('/api/auth/set-new-password', {
+      method: 'POST',
+      body: JSON.stringify({ new_password: newPw, new_password_confirm: newPwConfirm }),
+    });
+    currentUser.must_change_password = false;
+    localStorage.setItem('user', JSON.stringify(currentUser));
+    document.getElementById('mustChangePage').classList.add('hidden');
+    initApp();
+  } catch (err) {
+    resultDiv.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+  }
+}
+
 // ==================== SIFRE DEGISTIR ====================
 function showChangePassword() {
   const modal = document.getElementById('modalContent');
@@ -168,7 +202,7 @@ function logout() {
 // ==================== NAVIGATION ====================
 function navigate(page) {
   currentPage = page;
-  ['matchesPage', 'predictionsPage', 'leaderboardPage', 'adminPage', 'waitingPage'].forEach(id => {
+  ['matchesPage', 'predictionsPage', 'leaderboardPage', 'adminPage', 'waitingPage', 'mustChangePage'].forEach(id => {
     document.getElementById(id).classList.add('hidden');
   });
   document.querySelectorAll('.navbar-nav a').forEach(a => a.classList.remove('active'));
@@ -195,6 +229,12 @@ function initApp() {
   document.getElementById('authPage').classList.add('hidden');
   document.getElementById('appPage').classList.remove('hidden');
   document.getElementById('navbar').classList.remove('hidden');
+
+  // Sifre degistirmesi zorunluysa
+  if (currentUser.must_change_password) {
+    document.getElementById('mustChangePage').classList.remove('hidden');
+    return;
+  }
 
   document.getElementById('userInfo').textContent = `${currentUser.full_name} (${currentUser.total_points} puan)`;
 

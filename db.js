@@ -118,6 +118,7 @@ async function getDb() {
       password TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'user',
       status TEXT NOT NULL DEFAULT 'waiting',
+      must_change_password INTEGER NOT NULL DEFAULT 0,
       total_points INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
