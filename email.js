@@ -6,7 +6,7 @@ const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev';
 
 function sendEmail(to, subject, html) {
   return new Promise((resolve, reject) => {
-    const data = JSON.stringify({ from: `Dunya Kupasi 2026 <${FROM_EMAIL}>`, to: [to], subject, html });
+    const data = JSON.stringify({ from: FROM_EMAIL, to: [to], subject, html });
     const options = {
       hostname: 'api.resend.com',
       port: 443,
