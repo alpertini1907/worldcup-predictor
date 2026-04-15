@@ -62,8 +62,8 @@ async function sendResetEmail(email, token) {
     console.log(`[EMAIL] Sifre sifirlama maili gonderildi: ${email}`);
     return true;
   } catch (err) {
-    console.error(`[EMAIL] Gonderilemedi (${email}):`, err.message);
-    return false;
+    console.error(`[EMAIL] Reset gonderilemedi (${email}):`, err.message);
+    throw err;
   }
 }
 

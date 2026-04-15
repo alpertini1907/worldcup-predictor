@@ -125,8 +125,8 @@ router.post('/forgot-password', async (req, res) => {
         return res.json({ message: 'Sifre sifirlama maili gonderilemedi. SMTP ayarlarini kontrol edin.' });
       }
     } catch (e) {
-      console.error('[FORGOT] Hata:', e.message);
-      return res.json({ message: 'Mail gonderiminde hata: ' + e.message });
+      console.error('[FORGOT] Hata:', e);
+      return res.json({ message: 'Mail hatasi: ' + e.message });
     }
   }
   res.json({ message: 'Sifre sifirlama linki e-posta adresinize gonderildi.' });
