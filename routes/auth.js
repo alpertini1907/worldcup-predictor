@@ -118,11 +118,18 @@ router.post('/forgot-password', async (req, res) => {
 
   const user = db.prepare('SELECT id FROM users WHERE email = ?').get(email.trim().toLowerCase());
   if (user) {
-    const resetToken = jwt.sign({ id: user.id, purpose: 'reset' }, JWT_SECRET, { expiresIn: '1h' });
-    await sendResetEmail(email.trim().toLowerCase(), resetToken);
+    try {
+      const resetToken = jwt.sign({ id: user.id, purpose: 'reset' }, JWT_SECRET, { expiresIn: '1h' });
+      const sent = await sendResetEmail(email.trim().toLowerCase(), resetToken);
+      if (!sent) {
+        return res.json({ message: 'Sifre sifirlama maili gonderilemedi. SMTP ayarlarini kontrol edin.' });
+      }
+    } catch (e) {
+      console.error('[FORGOT] Hata:', e.message);
+      return res.json({ message: 'Mail gonderiminde hata: ' + e.message });
+    }
   }
-  // Guvenlik: her durumda ayni mesaj
-  res.json({ message: 'Eger bu e-posta kayitliysa sifre sifirlama linki gonderildi.' });
+  res.json({ message: 'Sifre sifirlama linki e-posta adresinize gonderildi.' });
 });
 
 // ==================== SIFRE SIFIRLAMA ====================
