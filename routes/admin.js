@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const { v4: uuid } = require('uuid');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 const { processMatchResults } = require('../scoring');
@@ -127,6 +128,24 @@ router.delete('/admins/:id', (req, res) => {
   if (!user) return res.status(404).json({ error: 'Admin bulunamadı' });
   db.prepare("UPDATE users SET role = 'user' WHERE id = ?").run(req.params.id);
   res.json({ message: 'Admin yetkisi kaldırıldı' });
+});
+
+// POST /api/admin/users/:id/reset-password - Admin sifre sifirlama
+router.post('/users/:id/reset-password', (req, res) => {
+  const db = req.db;
+  const user = db.prepare('SELECT id, full_name FROM users WHERE id = ?').get(req.params.id);
+  if (!user) return res.status(404).json({ error: 'Kullanici bulunamadi' });
+
+  // Rastgele 8 haneli sifre olustur
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  let newPassword = '';
+  for (let i = 0; i < 8; i++) {
+    newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+
+  const hashedPassword = bcrypt.hashSync(newPassword, 10);
+  db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashedPassword, req.params.id);
+  res.json({ message: `${user.full_name} icin yeni sifre: ${newPassword}`, newPassword });
 });
 
 // GET /api/admin/scoring-params

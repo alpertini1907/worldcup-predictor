@@ -20,7 +20,8 @@
     </ul>
     <div class="navbar-right">
       <span class="user-info" id="userInfo"></span>
-      <button class="btn-logout" onclick="logout()">Çıkış</button>
+      <button class="btn-logout" onclick="showChangePassword()">Sifre Degistir</button>
+      <button class="btn-logout" onclick="logout()">Cikis</button>
     </div>
   </nav>
 
@@ -43,67 +44,7 @@
           </div>
           <button type="submit" class="btn btn-primary" style="width:100%">Giriş Yap</button>
         </form>
-        <p class="auth-footer"><a href="#" onclick="showForgotPassword()">Sifremi Unuttum</a></p>
         <p class="auth-footer">Hesabın yok mu? <a href="#" onclick="showRegister()">Kayıt Ol</a></p>
-      </div>
-    </div>
-
-    <!-- FORGOT PASSWORD -->
-    <div id="forgotPage" class="auth-container hidden">
-      <div class="auth-card">
-        <h1 class="auth-title">Sifremi Unuttum</h1>
-        <p class="auth-subtitle">E-posta adresinize sifre sifirlama linki gonderecegiz</p>
-        <div id="forgotError" class="alert alert-error hidden"></div>
-        <div id="forgotSuccess" class="alert alert-success hidden"></div>
-        <form id="forgotForm" onsubmit="handleForgotPassword(event)">
-          <div class="form-group">
-            <label>E-posta</label>
-            <input type="email" class="form-control" id="forgotEmail" required placeholder="ornek@mail.com">
-          </div>
-          <button type="submit" class="btn btn-primary" style="width:100%">Sifirlama Linki Gonder</button>
-        </form>
-        <p class="auth-footer"><a href="#" onclick="showLogin()">Girise Don</a></p>
-      </div>
-    </div>
-
-    <!-- RESET PASSWORD -->
-    <div id="resetPage" class="auth-container hidden">
-      <div class="auth-card">
-        <h1 class="auth-title">Yeni Sifre Belirle</h1>
-        <div id="resetError" class="alert alert-error hidden"></div>
-        <div id="resetSuccess" class="alert alert-success hidden"></div>
-        <form id="resetForm" onsubmit="handleResetPassword(event)">
-          <div class="form-group">
-            <label>Yeni Sifre (en az 6 karakter)</label>
-            <input type="password" class="form-control" id="resetPassword" required minlength="6" placeholder="••••••">
-          </div>
-          <div class="form-group">
-            <label>Sifre Tekrar</label>
-            <input type="password" class="form-control" id="resetPasswordConfirm" required minlength="6" placeholder="••••••">
-          </div>
-          <button type="submit" class="btn btn-primary" style="width:100%">Sifremi Degistir</button>
-        </form>
-        <p class="auth-footer"><a href="#" onclick="showLogin()">Girise Don</a></p>
-      </div>
-    </div>
-
-    <!-- VERIFY EMAIL -->
-    <div id="verifyPage" class="auth-container hidden">
-      <div class="auth-card">
-        <h1 class="auth-title">E-posta Dogrulama</h1>
-        <div id="verifyMessage"><div class="spinner"></div></div>
-        <p class="auth-footer" style="margin-top:16px"><a href="#" onclick="showLogin()">Giris Yap</a></p>
-      </div>
-    </div>
-
-    <!-- NEEDS VERIFICATION -->
-    <div id="needsVerifyPage" class="auth-container hidden">
-      <div class="auth-card">
-        <h1 class="auth-title">E-posta Dogrulanmamis</h1>
-        <p class="auth-subtitle">Lutfen e-posta adresinize gonderilen dogrulama linkine tiklayin.</p>
-        <div id="resendResult"></div>
-        <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="resendVerification()">Dogrulama Mailini Tekrar Gonder</button>
-        <p class="auth-footer"><a href="#" onclick="showLogin()">Girise Don</a></p>
       </div>
     </div>
 
@@ -128,10 +69,14 @@
             <input type="tel" class="form-control" id="regPhone" required placeholder="05xx xxx xx xx">
           </div>
           <div class="form-group">
-            <label>Şifre (en az 6 karakter)</label>
+            <label>Sifre (en az 6 karakter)</label>
             <input type="password" class="form-control" id="regPassword" required minlength="6" placeholder="••••••">
           </div>
-          <button type="submit" class="btn btn-primary" style="width:100%">Kayıt Ol</button>
+          <div class="form-group">
+            <label>Sifre Tekrar</label>
+            <input type="password" class="form-control" id="regPasswordConfirm" required minlength="6" placeholder="••••••">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%">Kayit Ol</button>
         </form>
         <p class="auth-footer">Zaten hesabın var mı? <a href="#" onclick="showLogin()">Giriş Yap</a></p>
       </div>

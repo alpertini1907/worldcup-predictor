@@ -2,8 +2,6 @@
 let token = localStorage.getItem('token');
 let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
 let currentPage = 'matches';
-let pendingVerifyEmail = null;
-
 const API = '';
 
 // ==================== API HELPERS ====================
@@ -22,7 +20,7 @@ async function api(path, options = {}) {
 
 // ==================== AUTH PAGES ====================
 function hideAllAuthPages() {
-  ['loginPage', 'registerPage', 'forgotPage', 'resetPage', 'verifyPage', 'needsVerifyPage'].forEach(id => {
+  ['loginPage', 'registerPage'].forEach(id => {
     document.getElementById(id).classList.add('hidden');
   });
   clearAlerts();
@@ -36,16 +34,6 @@ function showLogin() {
 function showRegister() {
   hideAllAuthPages();
   document.getElementById('registerPage').classList.remove('hidden');
-}
-
-function showForgotPassword() {
-  hideAllAuthPages();
-  document.getElementById('forgotPage').classList.remove('hidden');
-}
-
-function showResetPassword() {
-  hideAllAuthPages();
-  document.getElementById('resetPage').classList.remove('hidden');
 }
 
 function clearAlerts() {
@@ -70,12 +58,6 @@ async function handleLogin(e) {
     localStorage.setItem('user', JSON.stringify(currentUser));
     initApp();
   } catch (err) {
-    if (err.data && err.data.needsVerification) {
-      pendingVerifyEmail = err.data.email;
-      hideAllAuthPages();
-      document.getElementById('needsVerifyPage').classList.remove('hidden');
-      return;
-    }
     const el = document.getElementById('loginError');
     el.textContent = err.message;
     el.classList.remove('hidden');
@@ -86,6 +68,14 @@ async function handleLogin(e) {
 async function handleRegister(e) {
   e.preventDefault();
   clearAlerts();
+  const password = document.getElementById('regPassword').value;
+  const passwordConfirm = document.getElementById('regPasswordConfirm').value;
+  if (password !== passwordConfirm) {
+    const el = document.getElementById('registerError');
+    el.textContent = 'Sifreler eslesmiyor';
+    el.classList.remove('hidden');
+    return;
+  }
   try {
     const data = await api('/api/auth/register', {
       method: 'POST',
@@ -93,7 +83,8 @@ async function handleRegister(e) {
         full_name: document.getElementById('regName').value,
         email: document.getElementById('regEmail').value,
         phone: document.getElementById('regPhone').value,
-        password: document.getElementById('regPassword').value,
+        password: password,
+        password_confirm: passwordConfirm,
       }),
     });
     const el = document.getElementById('registerSuccess');
@@ -107,59 +98,57 @@ async function handleRegister(e) {
   }
 }
 
-// ==================== FORGOT PASSWORD ====================
-async function handleForgotPassword(e) {
-  e.preventDefault();
-  clearAlerts();
-  try {
-    const data = await api('/api/auth/forgot-password', {
-      method: 'POST',
-      body: JSON.stringify({ email: document.getElementById('forgotEmail').value }),
-    });
-    const el = document.getElementById('forgotSuccess');
-    el.textContent = data.message;
-    el.classList.remove('hidden');
-    document.getElementById('forgotForm').reset();
-  } catch (err) {
-    const el = document.getElementById('forgotError');
-    el.textContent = err.message;
-    el.classList.remove('hidden');
-  }
+// ==================== SIFRE DEGISTIR ====================
+function showChangePassword() {
+  const modal = document.getElementById('modalContent');
+  modal.innerHTML = `
+    <h3 class="modal-title">Sifre Degistir</h3>
+    <div id="changePwResult"></div>
+    <div class="form-group">
+      <label>Mevcut Sifre</label>
+      <input type="password" class="form-control" id="cpCurrent" placeholder="••••••">
+    </div>
+    <div class="form-group">
+      <label>Yeni Sifre (en az 6 karakter)</label>
+      <input type="password" class="form-control" id="cpNew" placeholder="••••••">
+    </div>
+    <div class="form-group">
+      <label>Yeni Sifre Tekrar</label>
+      <input type="password" class="form-control" id="cpNewConfirm" placeholder="••••••">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Iptal</button>
+      <button class="btn btn-primary" onclick="changePassword()">Degistir</button>
+    </div>
+  `;
+  document.getElementById('modalOverlay').classList.remove('hidden');
 }
 
-// ==================== RESET PASSWORD ====================
-async function handleResetPassword(e) {
-  e.preventDefault();
-  clearAlerts();
-  const password = document.getElementById('resetPassword').value;
-  const confirm = document.getElementById('resetPasswordConfirm').value;
-  if (password !== confirm) {
-    const el = document.getElementById('resetError');
-    el.textContent = 'Sifreler eslesmiyor';
-    el.classList.remove('hidden');
+async function changePassword() {
+  const current = document.getElementById('cpCurrent').value;
+  const newPw = document.getElementById('cpNew').value;
+  const newPwConfirm = document.getElementById('cpNewConfirm').value;
+  const resultDiv = document.getElementById('changePwResult');
+
+  if (!current || !newPw || !newPwConfirm) {
+    resultDiv.innerHTML = '<div class="alert alert-error">Tum alanlari doldurun</div>';
     return;
   }
-  const params = new URLSearchParams(window.location.search);
-  const resetToken = params.get('token');
-  if (!resetToken) {
-    const el = document.getElementById('resetError');
-    el.textContent = 'Gecersiz sifirlama linki';
-    el.classList.remove('hidden');
+  if (newPw !== newPwConfirm) {
+    resultDiv.innerHTML = '<div class="alert alert-error">Yeni sifreler eslesmiyor</div>';
     return;
   }
   try {
-    const data = await api('/api/auth/reset-password', {
+    const data = await api('/api/auth/change-password', {
       method: 'POST',
-      body: JSON.stringify({ token: resetToken, password }),
+      body: JSON.stringify({ current_password: current, new_password: newPw, new_password_confirm: newPwConfirm }),
     });
-    const el = document.getElementById('resetSuccess');
-    el.textContent = data.message;
-    el.classList.remove('hidden');
-    document.getElementById('resetForm').reset();
+    resultDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+    document.getElementById('cpCurrent').value = '';
+    document.getElementById('cpNew').value = '';
+    document.getElementById('cpNewConfirm').value = '';
   } catch (err) {
-    const el = document.getElementById('resetError');
-    el.textContent = err.message;
-    el.classList.remove('hidden');
+    resultDiv.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
   }
 }
 
@@ -507,16 +496,27 @@ async function loadAdminUsers() {
         <td>${u.prediction_count}</td>
         <td><strong>${u.total_points}</strong></td>
         <td>
-          <select class="form-control" style="width:auto;padding:4px 8px;font-size:12px" onchange="changeUserStatus('${u.id}', this.value)">
+          <select class="form-control" style="width:auto;padding:4px 8px;font-size:12px;display:inline-block" onchange="changeUserStatus('${u.id}', this.value)">
             <option value="waiting" ${u.status === 'waiting' ? 'selected' : ''}>Beklemede</option>
             <option value="active" ${u.status === 'active' ? 'selected' : ''}>Aktif</option>
             <option value="passive" ${u.status === 'passive' ? 'selected' : ''}>Pasif</option>
           </select>
+          <button class="btn btn-accent btn-sm" style="margin-left:4px" onclick="resetUserPassword('${u.id}', '${u.full_name}')">Sifre Sifirla</button>
         </td>
       </tr>
     `).join('');
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="7" class="alert alert-error">${err.message}</td></tr>`;
+  }
+}
+
+async function resetUserPassword(userId, fullName) {
+  if (!confirm(`${fullName} icin sifre sifirlanacak. Emin misiniz?`)) return;
+  try {
+    const data = await api(`/api/admin/users/${userId}/reset-password`, { method: 'POST' });
+    alert(`${fullName} icin yeni sifre:\n\n${data.newPassword}\n\nBu sifreyi kullaniciya iletin.`);
+  } catch (err) {
+    alert(err.message);
   }
 }
 
@@ -856,60 +856,8 @@ function closeModal(e) {
   document.getElementById('modalOverlay').classList.add('hidden');
 }
 
-// ==================== RESEND VERIFICATION ====================
-async function resendVerification() {
-  if (!pendingVerifyEmail) return;
-  const resultDiv = document.getElementById('resendResult');
-  try {
-    const data = await api('/api/auth/resend-verification', {
-      method: 'POST',
-      body: JSON.stringify({ email: pendingVerifyEmail }),
-    });
-    resultDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
-  } catch (err) {
-    resultDiv.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
-  }
-}
-
-// ==================== VERIFY EMAIL (from link) ====================
-async function handleVerifyEmail() {
-  const params = new URLSearchParams(window.location.search);
-  const verifyToken = params.get('token');
-  const msgEl = document.getElementById('verifyMessage');
-  if (!verifyToken) {
-    msgEl.innerHTML = '<div class="alert alert-error">Gecersiz dogrulama linki</div>';
-    return;
-  }
-  try {
-    const data = await api(`/api/auth/verify?token=${verifyToken}`);
-    msgEl.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
-  } catch (err) {
-    msgEl.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
-  }
-}
-
-// ==================== ROUTER (URL-based) ====================
-function handleRoute() {
-  const path = window.location.pathname;
-  const params = new URLSearchParams(window.location.search);
-
-  if (path === '/verify' && params.get('token')) {
-    hideAllAuthPages();
-    document.getElementById('verifyPage').classList.remove('hidden');
-    handleVerifyEmail();
-    return true;
-  }
-  if (path === '/reset-password' && params.get('token')) {
-    showResetPassword();
-    return true;
-  }
-  return false;
-}
-
 // ==================== INIT ====================
 document.addEventListener('DOMContentLoaded', () => {
-  if (handleRoute()) return;
-
   if (token && currentUser) {
     initApp();
   } else {
