@@ -40,7 +40,12 @@
       "Bash(where gh:*)",
       "Bash(git --version)",
       "WebFetch(domain:www.tff.org)",
-      "WebFetch(domain:www.mackolik.com)"
+      "WebFetch(domain:www.mackolik.com)",
+      "WebFetch(domain:www.footballwebpages.co.uk)",
+      "WebFetch(domain:www.hurriyet.com.tr)",
+      "WebFetch(domain:dailysports.net)",
+      "WebFetch(domain:www.uefa.com)",
+      "WebFetch(domain:editorial.uefa.com)"
     ]
   }
 }

@@ -2,6 +2,7 @@
 let token = localStorage.getItem('token');
 let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
 let currentPage = 'matches';
+let pendingVerifyEmail = null;
 
 const API = '';
 
@@ -11,13 +12,17 @@ async function api(path, options = {}) {
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${API}${path}`, { ...options, headers });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Bir hata olustu');
+  if (!res.ok) {
+    const err = new Error(data.error || 'Bir hata olustu');
+    err.data = data;
+    throw err;
+  }
   return data;
 }
 
 // ==================== AUTH PAGES ====================
 function hideAllAuthPages() {
-  ['loginPage', 'registerPage', 'forgotPage', 'resetPage'].forEach(id => {
+  ['loginPage', 'registerPage', 'forgotPage', 'resetPage', 'verifyPage', 'needsVerifyPage'].forEach(id => {
     document.getElementById(id).classList.add('hidden');
   });
   clearAlerts();
@@ -65,6 +70,12 @@ async function handleLogin(e) {
     localStorage.setItem('user', JSON.stringify(currentUser));
     initApp();
   } catch (err) {
+    if (err.data && err.data.needsVerification) {
+      pendingVerifyEmail = err.data.email;
+      hideAllAuthPages();
+      document.getElementById('needsVerifyPage').classList.remove('hidden');
+      return;
+    }
     const el = document.getElementById('loginError');
     el.textContent = err.message;
     el.classList.remove('hidden');
@@ -216,7 +227,7 @@ function initApp() {
 
 // ==================== MATCHES ====================
 const stageNames = {
-  group: 'Grup', r16: 'Son 16', qf: 'Ceyrek Final', sf: 'Yari Final', final: 'Final'
+  group: 'Grup', r16: 'Son 16', qf: 'Ceyrek Final', sf: 'Yari Final', final: 'Final',
 };
 
 const stageOrder = ['group', 'r16', 'qf', 'sf', 'final'];
@@ -845,11 +856,49 @@ function closeModal(e) {
   document.getElementById('modalOverlay').classList.add('hidden');
 }
 
+// ==================== RESEND VERIFICATION ====================
+async function resendVerification() {
+  if (!pendingVerifyEmail) return;
+  const resultDiv = document.getElementById('resendResult');
+  try {
+    const data = await api('/api/auth/resend-verification', {
+      method: 'POST',
+      body: JSON.stringify({ email: pendingVerifyEmail }),
+    });
+    resultDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+  } catch (err) {
+    resultDiv.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+  }
+}
+
+// ==================== VERIFY EMAIL (from link) ====================
+async function handleVerifyEmail() {
+  const params = new URLSearchParams(window.location.search);
+  const verifyToken = params.get('token');
+  const msgEl = document.getElementById('verifyMessage');
+  if (!verifyToken) {
+    msgEl.innerHTML = '<div class="alert alert-error">Gecersiz dogrulama linki</div>';
+    return;
+  }
+  try {
+    const data = await api(`/api/auth/verify?token=${verifyToken}`);
+    msgEl.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+  } catch (err) {
+    msgEl.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+  }
+}
+
 // ==================== ROUTER (URL-based) ====================
 function handleRoute() {
   const path = window.location.pathname;
   const params = new URLSearchParams(window.location.search);
 
+  if (path === '/verify' && params.get('token')) {
+    hideAllAuthPages();
+    document.getElementById('verifyPage').classList.remove('hidden');
+    handleVerifyEmail();
+    return true;
+  }
   if (path === '/reset-password' && params.get('token')) {
     showResetPassword();
     return true;

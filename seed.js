@@ -9,7 +9,7 @@ async function seed() {
   const adminPassword = bcrypt.hashSync('admin123', 10);
   try {
     db.prepare(
-      "INSERT INTO users (id, full_name, email, phone, password, role, status) VALUES (?, ?, ?, ?, ?, 'admin', 'active')"
+      "INSERT INTO users (id, full_name, email, phone, password, role, status, email_verified) VALUES (?, ?, ?, ?, ?, 'admin', 'active', 1)"
     ).run(uuid(), 'Admin', 'admin@worldcup.com', '05001234567', adminPassword);
     console.log('Admin oluşturuldu: admin@worldcup.com / admin123');
   } catch (e) {
@@ -19,7 +19,7 @@ async function seed() {
   // alpertini admin
   try {
     db.prepare(
-      "INSERT INTO users (id, full_name, email, phone, password, role, status) VALUES (?, ?, ?, ?, ?, 'admin', 'active')"
+      "INSERT INTO users (id, full_name, email, phone, password, role, status, email_verified) VALUES (?, ?, ?, ?, ?, 'admin', 'active', 1)"
     ).run(uuid(), 'Alper Tini', 'alpertini@gmail.com', '00000000000', bcrypt.hashSync('admin123', 10));
     console.log('Alper admin oluşturuldu: alpertini@gmail.com / admin123');
   } catch (e) {
@@ -30,7 +30,7 @@ async function seed() {
   // Test user
   try {
     db.prepare(
-      "INSERT INTO users (id, full_name, email, phone, password, role, status) VALUES (?, ?, ?, ?, ?, 'user', 'active')"
+      "INSERT INTO users (id, full_name, email, phone, password, role, status, email_verified) VALUES (?, ?, ?, ?, ?, 'user', 'active', 1)"
     ).run(uuid(), 'Test Kullanıcı', 'test@worldcup.com', '05009876543', bcrypt.hashSync('test123', 10));
     console.log('Test kullanıcı: test@worldcup.com / test123');
   } catch (e) {
@@ -43,15 +43,25 @@ async function seed() {
   console.log('Eski maçlar temizlendi.');
 
   // =====================================================
-  // SÜPER LİG 29. HAFTA - DENEME MAÇLARI
-  // Tüm saatler UTC (Türkiye saati - 3)
+  // AVRUPA KUPALARI - DENEME MAÇLARI
+  // Tüm saatler UTC
   // =====================================================
   const matches = [
-    // 12 Nisan 2026 Pazar - 20:00 TR (17:00 UTC)
-    { home: 'Galatasaray', away: 'Kocaelispor', kickoff: '2026-04-12T17:00:00Z', stage: 'group', group: '29' },
-    // 13 Nisan 2026 Pazartesi - 20:00 TR (17:00 UTC)
-    { home: 'Eyüpspor', away: 'Samsunspor', kickoff: '2026-04-13T17:00:00Z', stage: 'group', group: '29' },
-    { home: 'Rizespor', away: 'Gaziantep FK', kickoff: '2026-04-13T17:00:00Z', stage: 'group', group: '29' },
+    // === ŞAMPİYONLAR LİGİ - 15 Nisan 2026 (Çeyrek Final Rövanş) ===
+    { home: 'Arsenal', away: 'Sporting CP', kickoff: '2026-04-15T19:00:00Z', stage: 'qf', group: 'CL' },
+    { home: 'Bayern Münih', away: 'Real Madrid', kickoff: '2026-04-15T19:00:00Z', stage: 'qf', group: 'CL' },
+
+    // === AVRUPA LİGİ - 16 Nisan 2026 (Çeyrek Final Rövanş) ===
+    { home: 'Celta Vigo', away: 'Freiburg', kickoff: '2026-04-16T16:45:00Z', stage: 'qf', group: 'EL' },
+    { home: 'Aston Villa', away: 'Bologna', kickoff: '2026-04-16T19:00:00Z', stage: 'qf', group: 'EL' },
+    { home: 'Nottingham Forest', away: 'Porto', kickoff: '2026-04-16T19:00:00Z', stage: 'qf', group: 'EL' },
+    { home: 'Real Betis', away: 'Braga', kickoff: '2026-04-16T19:00:00Z', stage: 'qf', group: 'EL' },
+
+    // === KONFERANS LİGİ - 16 Nisan 2026 (Çeyrek Final Rövanş) ===
+    { home: 'AZ Alkmaar', away: 'Shakhtar Donetsk', kickoff: '2026-04-16T16:45:00Z', stage: 'qf', group: 'ECL' },
+    { home: 'Fiorentina', away: 'Crystal Palace', kickoff: '2026-04-16T19:00:00Z', stage: 'qf', group: 'ECL' },
+    { home: 'AEK Athens', away: 'Rayo Vallecano', kickoff: '2026-04-16T19:00:00Z', stage: 'qf', group: 'ECL' },
+    { home: 'Strasbourg', away: 'Mainz', kickoff: '2026-04-16T19:00:00Z', stage: 'qf', group: 'ECL' },
   ];
 
   let added = 0;
