@@ -29,12 +29,12 @@ router.post('/register', async (req, res) => {
   ).run(id, full_name.trim(), cleanEmail, phone.trim(), hashedPassword);
 
   // Dogrulama maili gonder
-  const verifyToken = jwt.sign({ id, purpose: 'verify' }, JWT_SECRET, { expiresIn: '24h' });
-  const emailSent = await sendVerificationEmail(cleanEmail, verifyToken);
-
-  if (emailSent) {
+  try {
+    const verifyToken = jwt.sign({ id, purpose: 'verify' }, JWT_SECRET, { expiresIn: '24h' });
+    await sendVerificationEmail(cleanEmail, verifyToken);
     res.status(201).json({ message: 'Kayit basarili! E-posta adresinize dogrulama linki gonderildi. Lutfen mailinizi kontrol edin.' });
-  } else {
+  } catch (e) {
+    console.error('[REGISTER] Mail hatasi:', e.message);
     res.status(201).json({ message: 'Kayit basarili! Dogrulama maili gonderilemedi, admin ile iletisime gecin.' });
   }
 });

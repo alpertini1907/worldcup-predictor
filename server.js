@@ -36,11 +36,13 @@ app.get('*', (req, res) => {
 cron.schedule('* * * * *', async () => {
   try {
     const db = await getDb();
+    // 5 dk sonrasinin ISO string'i
+    const cutoff = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     const result = db.prepare(
-      "UPDATE matches SET status = 'locked' WHERE status = 'open' AND kickoff_at <= datetime('now', '+5 minutes')"
-    ).run();
+      "UPDATE matches SET status = 'locked' WHERE status = 'open' AND kickoff_at <= ?"
+    ).run(cutoff);
     if (result.changes > 0) {
-      console.log(`[CRON] ${result.changes} maç kilitlendi`);
+      console.log(`[CRON] ${result.changes} mac kilitlendi (cutoff: ${cutoff})`);
     }
   } catch (e) {
     console.error('[CRON] Hata:', e.message);

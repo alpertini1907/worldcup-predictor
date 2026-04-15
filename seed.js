@@ -77,9 +77,10 @@ async function seed() {
   console.log(`\n${added} maç eklendi (toplam ${matches.length} maç tanımlı).`);
 
   // Saati geçmiş maçları hemen kilitle (5 dk öncesi dahil)
+  const cutoff = new Date(Date.now() + 5 * 60 * 1000).toISOString();
   const locked = db.prepare(
-    "UPDATE matches SET status = 'locked' WHERE status = 'open' AND kickoff_at <= datetime('now', '+5 minutes')"
-  ).run();
+    "UPDATE matches SET status = 'locked' WHERE status = 'open' AND kickoff_at <= ?"
+  ).run(cutoff);
   if (locked.changes > 0) {
     console.log(`${locked.changes} maç otomatik kilitlendi (saat geçmiş).`);
   }
