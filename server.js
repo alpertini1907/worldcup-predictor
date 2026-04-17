@@ -27,25 +27,37 @@ app.use('/api/matches', require('./routes/matches'));
 app.use('/api/predictions', require('./routes/predictions'));
 app.use('/api/leaderboard', require('./routes/leaderboard'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/push', require('./routes/push'));
+app.use('/api/admin/push', require('./routes/push'));
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Cron: Lock matches every minute
+// Cron: Her dakika maçları kilitle
 cron.schedule('* * * * *', async () => {
   try {
     const db = await getDb();
-    // 5 dk sonrasinin ISO string'i
     const cutoff = new Date(Date.now() + 5 * 60 * 1000).toISOString();
     const result = db.prepare(
       "UPDATE matches SET status = 'locked' WHERE status = 'open' AND kickoff_at <= ?"
     ).run(cutoff);
     if (result.changes > 0) {
-      console.log(`[CRON] ${result.changes} mac kilitlendi (cutoff: ${cutoff})`);
+      console.log(`[CRON] ${result.changes} mac kilitlendi`);
     }
   } catch (e) {
     console.error('[CRON] Hata:', e.message);
+  }
+});
+
+// Cron: Her 10 dakikada biten maçların skorunu çek
+cron.schedule('*/10 * * * *', async () => {
+  try {
+    const db = await getDb();
+    const { autoFetchScores } = require('./autoScore');
+    await autoFetchScores(db);
+  } catch (e) {
+    console.error('[AUTO-SCORE] Cron hatasi:', e.message);
   }
 });
 
@@ -61,7 +73,7 @@ async function autoSeed() {
 }
 
 async function start() {
-  await getDb(); // ensure DB is ready
+  await getDb();
   await autoSeed();
   app.listen(PORT, () => {
     console.log(`Server çalışıyor: http://localhost:${PORT}`);

@@ -43,25 +43,26 @@ async function seed() {
   console.log('Eski maçlar temizlendi.');
 
   // =====================================================
-  // AVRUPA KUPALARI - DENEME MAÇLARI
-  // Tüm saatler UTC
+  // TRENDYOL SÜPER LİG - 30. HAFTA
+  // Saatler UTC (Türkiye saati -3)
   // =====================================================
   const matches = [
-    // === ŞAMPİYONLAR LİGİ - 15 Nisan 2026 (Çeyrek Final Rövanş) ===
-    { home: 'Arsenal', away: 'Sporting CP', kickoff: '2026-04-15T19:00:00Z', stage: 'qf', group: 'CL' },
-    { home: 'Bayern Münih', away: 'Real Madrid', kickoff: '2026-04-15T19:00:00Z', stage: 'qf', group: 'CL' },
+    // === 17 Nisan 2026 - Cuma (20:00 TRT = 17:00 UTC) ===
+    { home: 'Antalyaspor',       away: 'Konyaspor',     kickoff: '2026-04-17T17:00:00Z', stage: 'group', group: '30. Hafta' },
+    { home: 'Fenerbahçe',        away: 'Rizespor',       kickoff: '2026-04-17T17:00:00Z', stage: 'group', group: '30. Hafta' },
 
-    // === AVRUPA LİGİ - 16 Nisan 2026 (Çeyrek Final Rövanş) ===
-    { home: 'Celta Vigo', away: 'Freiburg', kickoff: '2026-04-16T16:45:00Z', stage: 'qf', group: 'EL' },
-    { home: 'Aston Villa', away: 'Bologna', kickoff: '2026-04-16T19:00:00Z', stage: 'qf', group: 'EL' },
-    { home: 'Nottingham Forest', away: 'Porto', kickoff: '2026-04-16T19:00:00Z', stage: 'qf', group: 'EL' },
-    { home: 'Real Betis', away: 'Braga', kickoff: '2026-04-16T19:00:00Z', stage: 'qf', group: 'EL' },
+    // === 18 Nisan 2026 - Cumartesi ===
+    { home: 'Fatih Karagümrük',  away: 'Eyüpspor',      kickoff: '2026-04-18T11:30:00Z', stage: 'group', group: '30. Hafta' }, // 14:30 TRT
+    { home: 'Kocaelispor',       away: 'Göztepe',        kickoff: '2026-04-18T14:00:00Z', stage: 'group', group: '30. Hafta' }, // 17:00 TRT
+    { home: 'Gençlerbirliği',    away: 'Galatasaray',    kickoff: '2026-04-18T17:00:00Z', stage: 'group', group: '30. Hafta' }, // 20:00 TRT
 
-    // === KONFERANS LİGİ - 16 Nisan 2026 (Çeyrek Final Rövanş) ===
-    { home: 'AZ Alkmaar', away: 'Shakhtar Donetsk', kickoff: '2026-04-16T16:45:00Z', stage: 'qf', group: 'ECL' },
-    { home: 'Fiorentina', away: 'Crystal Palace', kickoff: '2026-04-16T19:00:00Z', stage: 'qf', group: 'ECL' },
-    { home: 'AEK Athens', away: 'Rayo Vallecano', kickoff: '2026-04-16T19:00:00Z', stage: 'qf', group: 'ECL' },
-    { home: 'Strasbourg', away: 'Mainz', kickoff: '2026-04-16T19:00:00Z', stage: 'qf', group: 'ECL' },
+    // === 19 Nisan 2026 - Pazar ===
+    { home: 'Kasımpaşa',         away: 'Alanyaspor',     kickoff: '2026-04-19T11:30:00Z', stage: 'group', group: '30. Hafta' }, // 14:30 TRT
+    { home: 'Samsunspor',        away: 'Beşiktaş',       kickoff: '2026-04-19T14:00:00Z', stage: 'group', group: '30. Hafta' }, // 17:00 TRT
+    { home: 'Trabzonspor',       away: 'Başakşehir',     kickoff: '2026-04-19T17:00:00Z', stage: 'group', group: '30. Hafta' }, // 20:00 TRT
+
+    // === 20 Nisan 2026 - Pazartesi ===
+    { home: 'Gaziantep FK',      away: 'Kayserispor',    kickoff: '2026-04-20T17:00:00Z', stage: 'group', group: '30. Hafta' }, // 20:00 TRT
   ];
 
   let added = 0;

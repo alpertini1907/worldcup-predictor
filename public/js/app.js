@@ -10,6 +10,11 @@ async function api(path, options = {}) {
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${API}${path}`, { ...options, headers });
   const data = await res.json();
+  if (res.status === 401) {
+    // Token gecersiz veya DB sifirlandi - cikis yap
+    logout();
+    return;
+  }
   if (!res.ok) {
     const err = new Error(data.error || 'Bir hata olustu');
     err.data = data;
@@ -195,8 +200,16 @@ function logout() {
   document.getElementById('authPage').classList.remove('hidden');
   document.getElementById('appPage').classList.add('hidden');
   document.getElementById('navbar').classList.add('hidden');
+  // Mobil menüyü kapat
+  document.getElementById('navLinks').classList.remove('mobile-open');
   window.history.replaceState({}, '', '/');
   showLogin();
+}
+
+// ==================== MOBILE MENU ====================
+function toggleMobileMenu() {
+  const nav = document.getElementById('navLinks');
+  nav.classList.toggle('mobile-open');
 }
 
 // ==================== NAVIGATION ====================
@@ -247,16 +260,22 @@ function initApp() {
   document.querySelectorAll('.navbar-nav a').forEach(a => {
     a.addEventListener('click', (e) => {
       e.preventDefault();
+      document.getElementById('navLinks').classList.remove('mobile-open');
       navigate(a.dataset.page);
     });
   });
 
   navigate('matches');
+
+  // Push bildirimleri baslat (arka planda)
+  if (currentUser.status === 'active') {
+    setTimeout(() => initPush(), 2000);
+  }
 }
 
 // ==================== MATCHES ====================
 const stageNames = {
-  group: 'Grup', r16: 'Son 16', qf: 'Ceyrek Final', sf: 'Yari Final', final: 'Final',
+  group: 'Süper Lig', r16: 'Son 16', qf: 'Çeyrek Final', sf: 'Yarı Final', final: 'Final',
 };
 
 const stageOrder = ['group', 'r16', 'qf', 'sf', 'final'];
@@ -313,17 +332,26 @@ function renderMatches(matches) {
     let actionCol = '';
 
     if (m.status === 'done') {
+      // Tamamlanmis mac: gercek skor + kullanicinin tahmini + puan
       scoreCol = `
         <div class="row-score-result">
           <span class="row-real-score">${m.real_home_score} - ${m.real_away_score}</span>
           ${m.pred_home !== null
             ? `<span class="row-pred">Tahmin: ${m.pred_home}-${m.pred_away}</span>`
-            : '<span class="row-pred">-</span>'}
+            : '<span class="row-pred">Tahmin yok</span>'}
         </div>`;
-      actionCol = m.pred_home !== null
-        ? `<span class="prediction-result ${m.points_earned > 0 ? 'earned' : 'zero'}" style="margin:0;padding:4px 10px">${m.points_earned > 0 ? '+' + m.points_earned : '0'} p</span>`
-        : '';
-    } else if (m.pred_home !== null && m.status === 'open') {
+      actionCol = `
+        ${m.pred_home !== null ? `<span class="prediction-result ${m.points_earned > 0 ? 'earned' : 'zero'}" style="margin:0;padding:4px 10px">${m.points_earned > 0 ? '+' + m.points_earned : '0'} p</span>` : ''}
+        <button class="btn btn-accent btn-sm" onclick="showMatchPredictions('${m.id}', '${m.home_team}', '${m.away_team}')" style="margin-left:4px">Tahminler</button>
+      `;
+    } else if (m.status === 'locked') {
+      // Kilitli mac: kullanicinin tahmini (varsa) + herkesin tahminlerini gor butonu
+      scoreCol = m.pred_home !== null
+        ? `<span class="row-pred-locked">Tahmin: ${m.pred_home} - ${m.pred_away}</span>`
+        : `<span class="row-pred-locked">Tahmin yok</span>`;
+      actionCol = `<button class="btn btn-accent btn-sm" onclick="showMatchPredictions('${m.id}', '${m.home_team}', '${m.away_team}')">Tahminler</button>`;
+    } else if (m.pred_home !== null) {
+      // Acik mac, tahmin var: guncelleme
       scoreCol = `
         <div class="row-input-group">
           <input type="number" class="row-score-input" id="home_${m.id}" min="0" max="20" value="${m.pred_home}">
@@ -331,10 +359,8 @@ function renderMatches(matches) {
           <input type="number" class="row-score-input" id="away_${m.id}" min="0" max="20" value="${m.pred_away}">
         </div>`;
       actionCol = `<button class="btn btn-primary btn-sm" onclick="submitPrediction('${m.id}')">Guncelle</button>`;
-    } else if (m.pred_home !== null) {
-      scoreCol = `<span class="row-pred-locked">${m.pred_home} - ${m.pred_away}</span>`;
-      actionCol = `<button class="btn btn-accent btn-sm" onclick="showMatchPredictions('${m.id}', '${m.home_team}', '${m.away_team}')">Tahminler</button>`;
-    } else if (m.status === 'open') {
+    } else {
+      // Acik mac, tahmin yok: yeni tahmin
       scoreCol = `
         <div class="row-input-group">
           <input type="number" class="row-score-input" id="home_${m.id}" min="0" max="20" value="0">
@@ -342,14 +368,7 @@ function renderMatches(matches) {
           <input type="number" class="row-score-input" id="away_${m.id}" min="0" max="20" value="0">
         </div>`;
       actionCol = `<button class="btn btn-primary btn-sm" onclick="submitPrediction('${m.id}')">Kaydet</button>`;
-    } else {
-      scoreCol = `<span class="row-pred-locked">-</span>`;
-      actionCol = `<button class="btn btn-accent btn-sm" onclick="showMatchPredictions('${m.id}', '${m.home_team}', '${m.away_team}')">Tahminler</button>`;
     }
-
-    const predsBtn = (m.status !== 'open' && m.status === 'done')
-      ? `<button class="btn btn-accent btn-sm" onclick="showMatchPredictions('${m.id}', '${m.home_team}', '${m.away_team}')" style="margin-left:4px">Tahminler</button>`
-      : '';
 
     return `
       <div class="match-row" data-stage="${m.stage}">
@@ -363,7 +382,7 @@ function renderMatches(matches) {
           <span class="match-row-away">${m.away_team}</span>
         </div>
         <div class="match-row-score">${scoreCol}</div>
-        <div class="match-row-action">${actionCol}${predsBtn}</div>
+        <div class="match-row-action">${actionCol}</div>
       </div>
     `;
   }).join('');
@@ -452,28 +471,41 @@ async function loadPredictions() {
       <div class="stat-card"><div class="stat-value">${completed.length > 0 ? Math.round(correct.length / completed.length * 100) : 0}%</div><div class="stat-label">Basari Orani</div></div>
     `;
 
-    list.innerHTML = preds.map(p => `
-      <div class="match-card">
-        <div class="match-header">
-          <span>${formatDate(p.kickoff_at)}</span>
-          <span class="match-stage">${stageNames[p.stage]}</span>
+    list.innerHTML = '<div class="match-grid">' + preds.map(p => {
+      const stageBadge = `<span class="match-stage">${stageNames[p.stage]}</span>`;
+      const statusBadge = `<span class="badge badge-${p.match_status}">${p.match_status === 'open' ? 'Acik' : p.match_status === 'locked' ? 'Kilitli' : 'Bitti'}</span>`;
+
+      let scoreCol = '';
+      if (p.match_status === 'done') {
+        scoreCol = `
+          <div class="row-score-result">
+            <span class="row-real-score">${p.real_home_score} - ${p.real_away_score}</span>
+            <span class="row-pred">Tahmin: ${p.pred_home}-${p.pred_away}</span>
+          </div>`;
+      } else {
+        scoreCol = `<span class="row-pred-locked">${p.pred_home} - ${p.pred_away}</span>`;
+      }
+
+      const pointsCol = p.match_status === 'done'
+        ? `<span class="prediction-result ${p.points_earned > 0 ? 'earned' : 'zero'}" style="margin:0;padding:4px 10px">${p.points_earned > 0 ? '+' + p.points_earned : '0'} p</span>`
+        : '';
+
+      return `
+        <div class="match-row">
+          <div class="match-row-info">
+            <span class="match-row-date">${formatDate(p.kickoff_at)}</span>
+            ${stageBadge} ${statusBadge}
+          </div>
+          <div class="match-row-teams">
+            <span class="match-row-home">${p.home_team}</span>
+            <span class="match-row-vs">vs</span>
+            <span class="match-row-away">${p.away_team}</span>
+          </div>
+          <div class="match-row-score">${scoreCol}</div>
+          <div class="match-row-action">${pointsCol}</div>
         </div>
-        <div class="match-teams">
-          <div class="team">${p.home_team}</div>
-          <span class="match-vs">vs</span>
-          <div class="team">${p.away_team}</div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:14px;color:var(--text-light)">Tahmininiz: <strong>${p.pred_home} - ${p.pred_away}</strong></div>
-          ${p.match_status === 'done' ? `
-            <div style="font-size:14px;margin-top:4px">Gercek Skor: <strong>${p.real_home_score} - ${p.real_away_score}</strong></div>
-            <div class="prediction-result ${p.points_earned > 0 ? 'earned' : 'zero'}">
-              ${p.points_earned > 0 ? `+${p.points_earned} puan` : '0 puan'}
-            </div>
-          ` : `<div class="badge badge-${p.match_status}" style="margin-top:8px">${p.match_status === 'open' ? 'Mac bekleniyor' : 'Kilitli'}</div>`}
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('') + '</div>';
   } catch (err) {
     list.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
   }
@@ -515,12 +547,13 @@ async function loadLeaderboard() {
 function showAdminTab(tab) {
   document.querySelectorAll('#adminPage .tabs .tab').forEach(t => t.classList.remove('active'));
   event.target.classList.add('active');
-  ['adminUsers', 'adminMatches', 'adminScoring', 'adminAdmins'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  ['adminUsers', 'adminMatches', 'adminScoring', 'adminAdmins', 'adminNotify'].forEach(id => document.getElementById(id).classList.add('hidden'));
 
   if (tab === 'users') { document.getElementById('adminUsers').classList.remove('hidden'); loadAdminUsers(); }
   if (tab === 'matches') { document.getElementById('adminMatches').classList.remove('hidden'); loadAdminMatches(); }
   if (tab === 'scoring') { document.getElementById('adminScoring').classList.remove('hidden'); loadScoringParams(); }
   if (tab === 'admins') { document.getElementById('adminAdmins').classList.remove('hidden'); loadAdmins(); }
+  if (tab === 'notify') { document.getElementById('adminNotify').classList.remove('hidden'); }
 }
 
 async function loadAdminUsers() {
@@ -614,10 +647,10 @@ function showAddMatchModal() {
     <div class="form-group">
       <label>Asama</label>
       <select class="form-control" id="mStage">
-        <option value="group">Grup</option>
+        <option value="group">Süper Lig</option>
         <option value="r16">Son 16</option>
-        <option value="qf">Ceyrek Final</option>
-        <option value="sf">Yari Final</option>
+        <option value="qf">Çeyrek Final</option>
+        <option value="sf">Yarı Final</option>
         <option value="final">Final</option>
       </select>
     </div>
@@ -894,6 +927,72 @@ async function removeAdmin(adminId) {
 function closeModal(e) {
   if (e && e.target !== e.currentTarget) return;
   document.getElementById('modalOverlay').classList.add('hidden');
+}
+
+// ==================== PUSH NOTIFICATIONS ====================
+async function initPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  try {
+    // Service worker kaydet
+    const reg = await navigator.serviceWorker.register('/sw.js');
+
+    // VAPID key al
+    let vapidResp;
+    try { vapidResp = await api('/api/push/vapid-key'); } catch(e) { return; }
+    const vapidKey = vapidResp.publicKey;
+
+    // Mevcut aboneliği kontrol et
+    const existingSub = await reg.pushManager.getSubscription();
+    if (existingSub) {
+      // Zaten abone, backend'e bildiriyoruz (token yenilenmiş olabilir)
+      await api('/api/push/subscribe', { method: 'POST', body: JSON.stringify({ subscription: existingSub }) });
+      return;
+    }
+
+    // İzin iste
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
+
+    // Abone ol
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidKey),
+    });
+
+    await api('/api/push/subscribe', { method: 'POST', body: JSON.stringify({ subscription: sub }) });
+  } catch(e) {
+    console.log('[PUSH] Bildirim hatasi:', e.message);
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function sendPushNotification() {
+  const title = document.getElementById('pushTitle').value.trim();
+  const body = document.getElementById('pushBody').value.trim();
+  const resultDiv = document.getElementById('pushResult');
+  if (!title || !body) {
+    resultDiv.innerHTML = '<div class="alert alert-error">Başlık ve mesaj zorunludur</div>';
+    return;
+  }
+  try {
+    const data = await api('/api/admin/push/notify', {
+      method: 'POST',
+      body: JSON.stringify({ title, body }),
+    });
+    resultDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+    document.getElementById('pushTitle').value = '';
+    document.getElementById('pushBody').value = '';
+  } catch(err) {
+    resultDiv.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+  }
 }
 
 // ==================== INIT ====================

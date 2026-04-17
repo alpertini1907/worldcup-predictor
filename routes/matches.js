@@ -26,14 +26,6 @@ router.get('/:id/predictions', authenticate, requireActive, (req, res) => {
     return res.status(403).json({ error: 'Maç başlamadan tahminler görüntülenemez' });
   }
 
-  const predictions = db.prepare(`
-    SELECT u.full_name, p.pred_home, p.pred_away, p.points_earned
-    FROM predictions p
-    JOIN users u ON u.id = p.user_id
-    ORDER BY u.full_name ASC
-  `).all();
-
-  // Filter to this match
   const matchPreds = db.prepare(`
     SELECT u.full_name, p.pred_home, p.pred_away, p.points_earned
     FROM predictions p

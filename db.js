@@ -148,6 +148,14 @@ async function getDb() {
       UNIQUE(user_id, match_id)
     );
 
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      subscription TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(user_id)
+    );
+
     CREATE TABLE IF NOT EXISTS scoring_params (
       id TEXT PRIMARY KEY,
       stage TEXT NOT NULL UNIQUE,

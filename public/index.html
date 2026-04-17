@@ -17,11 +17,14 @@
       <li><a href="#" data-page="predictions">Tahminlerim</a></li>
       <li><a href="#" data-page="leaderboard">Sıralama</a></li>
       <li id="adminNavItem" class="hidden"><a href="#" data-page="admin">Admin</a></li>
+      <li class="mobile-only-nav"><a href="#" onclick="showChangePassword();toggleMobileMenu()">Şifre Değiştir</a></li>
+      <li class="mobile-only-nav"><a href="#" onclick="logout()">Çıkış</a></li>
     </ul>
     <div class="navbar-right">
       <span class="user-info" id="userInfo"></span>
-      <button class="btn-logout" onclick="showChangePassword()">Sifre Degistir</button>
-      <button class="btn-logout" onclick="logout()">Cikis</button>
+      <button class="btn-logout desktop-only" onclick="showChangePassword()">Şifre Değiştir</button>
+      <button class="btn-logout desktop-only" onclick="logout()">Çıkış</button>
+      <button class="mobile-toggle" onclick="toggleMobileMenu()" aria-label="Menü">&#9776;</button>
     </div>
   </nav>
 
@@ -157,6 +160,7 @@
           <button class="tab" onclick="showAdminTab('matches')">Maçlar</button>
           <button class="tab" onclick="showAdminTab('scoring')">Puanlama</button>
           <button class="tab" onclick="showAdminTab('admins')">Adminler</button>
+          <button class="tab" onclick="showAdminTab('notify')">Bildirim</button>
         </div>
 
         <!-- Export buttons -->
@@ -239,6 +243,23 @@
               <tbody id="adminAdminList"></tbody>
             </table>
           </div>
+        </div>
+
+        <!-- Admin: Notify -->
+        <div id="adminNotify" class="card hidden">
+          <div class="card-header">
+            <h3>Push Bildirim Gönder</h3>
+          </div>
+          <div id="pushResult"></div>
+          <div class="form-group">
+            <label>Başlık</label>
+            <input type="text" class="form-control" id="pushTitle" placeholder="Örn: Maç Başlıyor!">
+          </div>
+          <div class="form-group">
+            <label>Mesaj</label>
+            <textarea class="form-control" id="pushBody" rows="3" placeholder="Bildirim mesajını buraya yazın..."></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="sendPushNotification()">Herkese Gönder 🔔</button>
         </div>
 
         <!-- Admin: Scoring -->
